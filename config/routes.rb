@@ -5,6 +5,7 @@ Loops::Application.routes.draw do
   get "home/index"
   match 'loops' => 'loops#index'
   match 'loops/nodes' => 'loops#nodes'
+  match 'loops/connections' => 'loops#connections'
   
   # The priority is based upon order of creation:
   # first created -> highest priority.
