@@ -1,7 +1,12 @@
 
+<% content_for :assign_node_dataset do %>
+  var dataset = [<%= @node_dataset %>];
+<% end %>
+
 Nodes!!!!!
 <% if flash[:message1] %>
 <div><%= flash[:message1] %></div>
+<%= @node_dataset %>
 <% end %>
 
 <% if flash[:message2] %>
@@ -17,22 +22,8 @@ Nodes!!!!!
     <div id="viz"></div>
     <script type="text/javascript">
 
-var dataset = [];
+var dataset = <%= raw(@node_dataset) %>;
 
-dataset.push(["Person", "Damien", "A note", "some tags"]);
-dataset.push(["Person", "Grant", "", ""]);
-dataset.push(["Person", "Kelly", "", ""]);
-dataset.push(["Person", "Mike", "", ""]);
-dataset.push(["Person", "Charles", "", ""]);
-dataset.push(["Person", "Vanessa", "", ""]);
-dataset.push(["Person", "Rich", "", ""]);
-dataset.push(["Person", "Gavin", "", ""]);
-dataset.push(["Person", "Mindy", "a note about Mindy", "tags related to mindy"]);
-dataset.push(["Person", "Jason", "", ""]);
-dataset.push(["Person", "Phil", "", ""]);
-dataset.push(["Person", "Blake", "", ""]);
-dataset.push(["Organization", "ThoughtWorks", "", ""]);
-dataset.push(["Organization", "Client", "", ""]);
 d3.select("#viz")
     .append("table")
     .style("border-collapse", "collapse")
