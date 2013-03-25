@@ -1,0 +1,13 @@
+  <%= form_for @current_login, :url => {:action => "nodes"}, :method => "get" do |f| %>
+    Google User ID:
+    <%= f.text_field :user %>
+    <p>
+    Password (not saved!):  
+    <%= f.password_field :password %>
+    <p>
+    Document key:  
+    <%= f.text_field :key %>
+    <p>
+    <%= f.submit "Generate" %>
+  <% end %>
+  

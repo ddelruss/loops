@@ -1,0 +1,55 @@
+
+<% if flash[:message1] %>
+<div><%= flash[:message1] %></div>
+<% end %>
+
+<% if flash[:message2] %>
+<div><%= flash[:message2] %></div>
+<% end %>
+
+<!DOCTYPE html>
+<html>
+<head>
+    <script type="text/javascript" src="http://mbostock.github.com/d3/d3.js"></script>
+</head>
+<body>
+    <div id="viz"></div>
+    <script type="text/javascript">
+
+var dataset = [];
+
+dataset.push(["Person", "Damien", "A note", "some tags"]);
+dataset.push(["Person", "Grant", "", ""]);
+dataset.push(["Person", "Kelly", "", ""]);
+dataset.push(["Person", "Mike", "", ""]);
+dataset.push(["Person", "Charles", "", ""]);
+dataset.push(["Person", "Vanessa", "", ""]);
+dataset.push(["Person", "Rich", "", ""]);
+dataset.push(["Person", "Gavin", "", ""]);
+dataset.push(["Person", "Mindy", "a note about Mindy", "tags related to mindy"]);
+dataset.push(["Person", "Jason", "", ""]);
+dataset.push(["Person", "Phil", "", ""]);
+dataset.push(["Person", "Blake", "", ""]);
+dataset.push(["Organization", "ThoughtWorks", "", ""]);
+dataset.push(["Organization", "Client", "", ""]);
+d3.select("#viz")
+    .append("table")
+    .style("border-collapse", "collapse")
+    .style("border", "2px black solid")
+    
+    .selectAll("tr")
+    .data(dataset)
+    .enter().append("tr")
+    
+    .selectAll("td")
+    .data(function(d){return d;})
+    .enter().append("td")
+    .style("border", "1px black solid")
+    .style("padding", "10px")
+    .on("mouseover", function(){d3.select(this).style("background-color", "aliceblue")}) 
+    .on("mouseout", function(){d3.select(this).style("background-color", "white")}) 
+    .text(function(d){return d;})
+    .style("font-size", "12px");
+    </script>
+</body>
+</html>
