@@ -1,4 +1,4 @@
-Clients
+People
 <% if flash[:message1] %>
 	<div><%= flash[:message1] %></div>
 <% end %>
@@ -34,9 +34,9 @@ var json =  <%= raw(@graph_json_people) %>
 // }
 
 var force = d3.layout.force()
-    .gravity(.005)
+    .gravity(.01)
     .distance(200)
-    .charge(-10)
+    .charge(-70)
     .size([width, height]);
 
   force
