@@ -13,11 +13,21 @@ class LoopsController < ApplicationController
     # flash[:message2] = "The params are: " + aString
     # @current_login = params[:login]
 
-    flash[:message1] = "Start..."
+    # flash[:message1] = "Start..."
+
     process_google_doc params[:login]
     @graph_json = @controller.d3_graph_json
+    @graph_json_clients = @controller.d3_graph_json_clients_only
+    @graph_json_people = @controller.d3_graph_json_people_no_organizations
+    
     # flash[:message1] = flash[:message1] + "Graph JSON is: " + @graph_json.to_s
     
+    if params[:commit].eql?("Clients")
+      render :action => "clients"
+    end
+    if params[:commit].eql?("People")
+      render :action => "people"
+    end
     if params[:commit].eql?("Connections")
       render :action => "connections"
     end
@@ -34,7 +44,7 @@ class LoopsController < ApplicationController
   end
     
   def process_google_doc(login_hash)
-    flash[:message1] = flash[:message1] + "Processing google doc..."    
+    # flash[:message1] = flash[:message1] + "Processing google doc..."    
     google_session = GoogleDrive.login(login_hash[:user], login_hash[:password])
     document = Loops::Google_Doc.new(google_session, login_hash[:key])
     # document = Loops::Google_Doc.new(google_session, "0AtOGnLq8Mf_ydGEtVFZMNDZtbHY3dHhWT3VxWjE4UFE")

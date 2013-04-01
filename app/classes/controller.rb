@@ -78,14 +78,47 @@ module Loops
       output = write_json_links(output, @nodes)
       output = output.chop + "]}"
     end
-    def write_json_links(output, nodes)
+
+    def d3_graph_json_clients_only
+      filtered_nodes = []
+      output = "{\"nodes\":["      
+      @nodes.each {|node|
+        if node.node_type.include? "Client"
+          modified_json = node.to_json
+          output = output + modified_json + ","
+          filtered_nodes = filtered_nodes + [node]
+        end
+      }
+      output = output.chop + "],\"links\":["
+      output = write_json_links(output, filtered_nodes)
+      output = output.chop + "]}"
+    end
+
+    def d3_graph_json_people_no_organizations
+      filtered_nodes = []
+      output = "{\"nodes\":["      
+      @nodes.each {|node|
+        if node.node_type.include? "Person"
+          modified_json = node.to_json
+          output = output + modified_json + ","
+          filtered_nodes = filtered_nodes + [node]
+        end
+      }
+      output = output.chop + "],\"links\":["
+      output = write_json_links(output, filtered_nodes, "Reports")
+      output = output.chop + "]}"
+    end
+
+    def write_json_links(output, nodes, exclude="nothing to exclude")
       @links.each {|link|
-        target_node = node_with_description(nodes, link.source)
-        source_node = node_with_description(nodes, link.target)
-        if target_node && source_node
-          # output = output + "{\"source\":\"#{source_node.node_id}\",\"target\":\"#{target_node.node_id}\",\"label\":\"#{link.label}\"},"
-          # if you want indexes...   
-          output = output + "{\"source\":#{@nodes.index(source_node)},\"target\":#{@nodes.index(target_node)},\"label\":\"#{link.label}\"}\n,"
+        if !(link.label.include? exclude)
+          target_node = node_with_description(nodes, link.source)
+          source_node = node_with_description(nodes, link.target)
+          if target_node && source_node
+            # output = output + "{\"source\":\"#{source_node.node_id}\",\"target\":\"#{target_node.node_id}\",\"label\":\"#{link.label}\"},"
+            # if you want indexes...   
+            output = output + "{\"source\":#{nodes.index(source_node)},\"target\":#{nodes.index(target_node)},\"label\":\"#{link.label}\"},"
+          end
         end
       }
       output
