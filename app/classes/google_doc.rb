@@ -2,7 +2,7 @@ require "rubygems"
 require "bundler/setup"
 
 require "google_drive"
-require "highline"
+# require "highline"
 
 module Loops
   class Google_Doc

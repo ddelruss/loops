@@ -1,6 +1,7 @@
 Diagram
 <% if flash[:message1] %>
-<div><%= flash[:message1] %></div>
+	<div><%= flash[:message1] %></div>
+	<div><%= raw(@graph_json) %></div>
 <% end %>
 
 <% if flash[:message2] %>
@@ -25,10 +26,12 @@ var svg = d3.select("body").append("svg")
     .attr("width", width)
     .attr("height", height);
 
-var json = /* <%= raw(@myInMemoryObject) %> */ {
-    "nodes":[{"name":"Damien","id":"a"}, {"name":"Bob","id":"b"}],
-    "links":[{"source":0, "target":1,"value":1}]
-}
+var json =  <%= raw(@graph_json) %>
+
+// var json = /* <%= raw(@myInMemoryObject) %> */ {
+//     "nodes":[{"name":"Damien","id":"a"}, {"name":"Bob","id":"b"}],
+//     "links":[{"source":0, "target":1,"value":1}]
+// }
 
 var force = d3.layout.force()
     .gravity(.05)

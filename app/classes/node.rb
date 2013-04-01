@@ -25,6 +25,7 @@ module Loops
           @notes = ""
           @view = ""
         end
+        @name = @description
       else
         @node_type = "Error creating node."
         @description = "Error creating node."
@@ -33,7 +34,7 @@ module Loops
         @view = "Error creating node."
       end
     end
-    attr_reader :node_type, :description, :title, :notes, :view
+    attr_reader :node_type, :description, :title, :notes, :view, :name
     def node_id()
       (@description + "_" + @node_type).gsub(" ","_").downcase
     end
