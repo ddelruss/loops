@@ -81,14 +81,18 @@ module Loops
 
     def d3_graph_json_clients_only
       filtered_nodes = []
-      output = "{\"nodes\":["      
       @nodes.each {|node|
         if node.node_type.include? "Client"
-          modified_json = node.to_json
-          output = output + modified_json + ","
           filtered_nodes = filtered_nodes + [node]
         end
       }
+      output = "{\"nodes\":["      
+      filtered_nodes.each {|node|
+        modified_json = node.to_json.chop + ",\"reports\":#{reports_to_count(node.description)},\"direct_reports\":#{connections_count(node.description)}}"
+        output = output + modified_json + ","
+        filtered_nodes = filtered_nodes + [node]
+      }
+      
       output = output.chop + "],\"links\":["
       output = write_json_links(output, filtered_nodes)
       output = output.chop + "]}"
