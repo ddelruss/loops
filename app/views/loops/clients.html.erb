@@ -2,7 +2,7 @@ Clients
 <% if flash[:message1] %>
 	<div><%= flash[:message1] %></div>
 <% end %>
-<div><%= raw(@graph_json_clients) %></div>
+<!-- <div><%= raw(@graph_json_clients) %></div> -->
 
 <% if flash[:message2] %>
 <div><%= flash[:message2] %></div>
@@ -94,9 +94,14 @@ var json =  <%= raw(@graph_json_clients) %>
 	   .attr("y", -boxHeight/2)
 	   .attr("width", boxWidth)
 	   .attr("height", function(d) { return d.title =="" ? boxHeight/2 : boxHeight;})
-       .style("stroke", "#000000")
+       // .style("stroke", "#000000")
+       .style("stroke", function(d) { 
+			if (d.view == "Positive") return "#1f77b4";
+			if (d.view == "Negative") return "#d62728";
+			if (d.view == "Neutral") return "#8c564b"; 
+			return "#7f7f7f";})
        .style("fill", "white")
-       .style("stroke-width", 2.0);
+       .style("stroke-width", 3.0);
 	
   	node.append("text")
       .attr("text-anchor", "middle")
