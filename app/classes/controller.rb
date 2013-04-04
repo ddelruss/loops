@@ -68,7 +68,7 @@ module Loops
       }
       output = "{\"nodes\":["      
       filtered_nodes.each {|node|
-        modified_json = node.to_json.chop + ",\"reports\":#{reports_to_count(node.description)},\"direct_reports\":#{connections_count(node.description)}}"
+        modified_json = node.to_json.chop + ",\"reports\":#{reports_to_count(node.description)},\"direct_reports\":#{direct_reports_to_count(node.description)}}"
         output = output + modified_json + ","
         filtered_nodes = filtered_nodes + [node]
       }
@@ -127,6 +127,18 @@ module Loops
       }
       count
     end
+    def direct_reports_to_count(description)
+      @visited_nodes = []
+      count = 0
+      @links.each {|link|
+        if link.target == description && link.label == @reports_to && !@visited_nodes.index(link.source)
+          count += 1
+          @visited_nodes = @visited_nodes + [link.source]
+        end
+      }
+      count
+    end
+
     def connections_count(description)
       count = 0
       @links.each {|link|

@@ -31,10 +31,11 @@ line {
 <script type="text/javascript">
 
 var width = 1200,
-    height = 1000,
+    height = 1200,
     boxWidth = 150,
     boxHeight = 40,
-    radius = 35
+    radius = 35,
+	padding = 5
 
 	var w = 1200,
 	    h = 1000,
@@ -42,31 +43,18 @@ var width = 1200,
 	    fill = d3.scale.category20();
 		
 		var force = d3.layout.force()
-		.gravity(.1)
+			.gravity(.1)
+			// .friction(.8)
 		    .charge(-500)
-		    .linkDistance(140)
-		.linkStrength(.2)
-		    .size([w, h]);
+		    .linkDistance(function(d) {return 60 + (d.source.direct_reports > 0 ? 5 * d.source.direct_reports : 0)})
+		    .linkStrength(function(d) { return (d.source.direct_reports > 0 ? 1/Math.sqrt(4*d.source.direct_reports) : 1) })
+		    .size([width, height]);
 		
-// var svg = d3.select("body").append("svg")
-//     .attr("width", width)
-//     .attr("height", height);
 	var svg = d3.select("body").append("svg:svg")
-	    .attr("width", w)
-	    .attr("height", h);
+	    .attr("width", width)
+	    .attr("height", height);
 
-var json =  <%= raw(@graph_json_clients) %>
-
-// var json = /* <%= raw(@myInMemoryObject) %> */ {
-//     "nodes":[{"name":"Damien","id":"a"}, {"name":"Bob","id":"b"}],
-//     "links":[{"source":0, "target":1,"value":1}]
-// }
-
-// var force = d3.layout.force()
-//     .gravity(.1)
-//     .distance(175)
-//     .charge(-70)
-//     .size([width, height]);
+	var json =  <%= raw(@graph_json_clients) %>
 
 	var link = svg.selectAll("line")
 	      .data(json.links)
@@ -75,26 +63,17 @@ var json =  <%= raw(@graph_json_clients) %>
 	      .style("stroke", "#000000")
 	      .style("stroke-width", 1.0);
 
-	
-  // var link = svg.selectAll(".link")
-  //     .data(json.links)
-  //   .enter().append("line")
-  //     .attr("class", "link")
-  //     .style("stroke", "#000000")
-  //     .style("stroke-width", 1.0);
-
-  var node = svg.selectAll(".node")
-      .data(json.nodes)
-    .enter().append("g")
-      .attr("class", "node")
-      .call(force.drag);
+  	var node = svg.selectAll(".node")
+  		.data(json.nodes)
+    	.enter().append("g")
+      	.attr("class", "node")
+      	.call(force.drag);
 
 	node.append("rect")
 	   .attr("x", -boxWidth/2)
 	   .attr("y", -boxHeight/2)
 	   .attr("width", boxWidth)
 	   .attr("height", function(d) { return d.title =="" ? boxHeight/2 : boxHeight;})
-       // .style("stroke", "#000000")
        .style("stroke", function(d) { 
 			if (d.view == "Positive") return "#1f77b4";
 			if (d.view == "Negative") return "#d62728";
@@ -119,52 +98,21 @@ var json =  <%= raw(@graph_json_clients) %>
 	      .start();
 
   force.on("tick", function(e) {
-	var k = 1 * e.alpha;
-	    // json.links.forEach(function(d, i) {
-	    //   d.source.y -= k;
-	    //   d.target.y += k;
-	    // });
-	json.nodes.forEach(function(d, i) {
-		d.x -= d.reports*k
-	});
+		var k = 1 * e.alpha;
+	    json.links.forEach(function(d, i) {
+	      d.target.y -= d.target.reports*k;
+	      d.source.y += d.source.reports*k;
+		  // if (d.target.x < boxWidth + padding) d.target.x = boxWidth + padding;
+		  if (d.target.y < boxHeight + padding) d.target.y = boxHeight + padding;
+		  d.source.y = (d.target.y - d.source.y < boxHeight + padding) ? d.target.y - boxHeight - padding : d.source.y;	
+	    });
     link.attr("x1", function(d) { return d.source.x; })
         .attr("y1", function(d) { return d.source.y; })
         .attr("x2", function(d) { return d.target.x; })
         .attr("y2", function(d) { return d.target.y; });
 
     node
-    // .each(collide(1))
         .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
   });
   
-  // resolves collisions vertically using boxHeight
-  function collide(alpha) {
-    var quadtree = d3.geom.quadtree(nodes);
-    return function(d) {
-      var r = boxHeight + padding,
-                      nx1 = d.x - r,
-                      nx2 = d.x + r,
-                      ny1 = d.y - r,
-                      ny2 = d.y + r;
-                  quadtree.visit(function(quad, x1, y1, x2, y2) {
-                    if (quad.point && (quad.point !== d)) {
-                      var x = d.x - quad.point.x,
-                          y = d.y - quad.point.y,
-                          l = Math.sqrt(x * x + y * y),
-                          r = boxHeight;
-                      if (l < r) {
-                        l = (l - r) / l * alpha;
-                        d.x -= x *= l;
-                        d.y -= y *= l;
-                        quad.point.x += x;
-                        quad.point.y += y;
-                      }
-                    }
-                    return x1 > nx2
-                        || x2 < nx1
-                        || y1 > ny2
-                        || y2 < ny1;
-                });
-      }
-    };
 </script>
