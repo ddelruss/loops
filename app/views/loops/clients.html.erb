@@ -45,7 +45,7 @@ var width = 1200,
 		var force = d3.layout.force()
 			.gravity(.1)
 			// .friction(.8)
-		    .charge(-500)
+		    .charge(-600)
 		    .linkDistance(function(d) {return 60 + (d.source.direct_reports > 0 ? 5 * d.source.direct_reports : 0)})
 		    .linkStrength(function(d) { return (d.source.direct_reports > 0 ? 1/Math.sqrt(4*d.source.direct_reports) : 1) })
 		    .size([width, height]);
@@ -98,7 +98,7 @@ var width = 1200,
 	      .start();
 
   force.on("tick", function(e) {
-		var k = 1 * e.alpha;
+		var k = 1 * e.alpha, j;
 	    json.links.forEach(function(d, i) {
 	      d.target.y -= d.target.reports*k;
 	      d.source.y += d.source.reports*k;
@@ -106,6 +106,15 @@ var width = 1200,
 		  if (d.target.y < boxHeight + padding) d.target.y = boxHeight + padding;
 		  d.source.y = (d.target.y - d.source.y < boxHeight + padding) ? d.target.y - boxHeight - padding : d.source.y;	
 	    });
+		taken = [];
+		json.nodes.forEach(function(d, i) {
+			for (j = 0; j < i; j++) {
+				if (Math.abs(d.y - taken[j].y) < boxHeight && Math.abs(d.x - taken[j].x) < boxWidth) {
+					d.y = taken[j].y + boxHeight + padding;
+				}
+			}
+			taken.push(d);
+		});
     link.attr("x1", function(d) { return d.source.x; })
         .attr("y1", function(d) { return d.source.y; })
         .attr("x2", function(d) { return d.target.x; })
