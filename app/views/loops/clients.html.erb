@@ -47,7 +47,7 @@ var width = 1200,
 			// .friction(.8)
 		    .charge(-600)
 		    .linkDistance(function(d) {return 60 + (d.source.direct_reports > 0 ? 5 * d.source.direct_reports : 0)})
-		    .linkStrength(function(d) { return (d.source.direct_reports > 0 ? 1/Math.sqrt(4*d.source.direct_reports) : 1) })
+		    .linkStrength(function(d) { return (d.source.direct_reports > 0 ? 1/Math.sqrt(3*d.source.direct_reports) : 1) })
 		    .size([width, height]);
 		
 	var svg = d3.select("body").append("svg:svg")
@@ -109,8 +109,11 @@ var width = 1200,
 		taken = [];
 		json.nodes.forEach(function(d, i) {
 			for (j = 0; j < i; j++) {
-				if (Math.abs(d.y - taken[j].y) < boxHeight && Math.abs(d.x - taken[j].x) < boxWidth) {
-					d.y = taken[j].y + boxHeight + padding;
+				if (Math.abs(d.y - taken[j].y) < boxHeight + padding && Math.abs(d.x - taken[j].x) < boxWidth + padding) {
+					d.y = (d.y > taken[j].y) ? d.y + padding*k : d.y - padding*k;
+					d.x = (d.x > taken[j].x) ? d.x + padding*k : d.x - padding*k;
+					// d.y = taken[j].y + boxHeight + padding;
+					// d.y = taken[j].y + padding;
 				}
 			}
 			taken.push(d);
