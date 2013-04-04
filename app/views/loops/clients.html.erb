@@ -93,31 +93,19 @@ var json =  <%= raw(@graph_json_clients) %>
 	   .attr("x", -boxWidth/2)
 	   .attr("y", -boxHeight/2)
 	   .attr("width", boxWidth)
-	   // .attr("height", boxHeight)
 	   .attr("height", function(d) { return d.title =="" ? boxHeight/2 : boxHeight;})
        .style("stroke", "#000000")
        .style("fill", "white")
        .style("stroke-width", 2.0);
 	
-  // node.append("circle")
-  //         .attr("class", "node")
-  //         .attr("r", radius)
-  //         .style("fill", function(d) { if (d.name == "Damien") return "yellow"; else return "pink"; })
-  //         .style("stroke", "#000000")
-  //         .style("stroke-width", 2.0)
-  //         .attr("x", -radius)
-  //         .attr("y", -radius)
-  //         .attr("width", 2 * radius)
-  //         .attr("height", 2 * radius);
-          
   	node.append("text")
       .attr("text-anchor", "middle")
-      .attr("dy", "-.55em")
+      .attr("dy", "-.4em")
       .text(function(d) { return d.name;});
 
 	node.append("text")
 	    	.attr("text-anchor", "middle")
-	    	.attr("dy", ".7em")
+	    	.attr("dy", ".8em")
 	    	.text(function(d) { return d.title;});
 
 	  force
@@ -139,7 +127,39 @@ var json =  <%= raw(@graph_json_clients) %>
         .attr("x2", function(d) { return d.target.x; })
         .attr("y2", function(d) { return d.target.y; });
 
-    node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+    node
+    // .each(collide(1))
+        .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
   });
-
+  
+  // resolves collisions vertically using boxHeight
+  function collide(alpha) {
+    var quadtree = d3.geom.quadtree(nodes);
+    return function(d) {
+      var r = boxHeight + padding,
+                      nx1 = d.x - r,
+                      nx2 = d.x + r,
+                      ny1 = d.y - r,
+                      ny2 = d.y + r;
+                  quadtree.visit(function(quad, x1, y1, x2, y2) {
+                    if (quad.point && (quad.point !== d)) {
+                      var x = d.x - quad.point.x,
+                          y = d.y - quad.point.y,
+                          l = Math.sqrt(x * x + y * y),
+                          r = boxHeight;
+                      if (l < r) {
+                        l = (l - r) / l * alpha;
+                        d.x -= x *= l;
+                        d.y -= y *= l;
+                        quad.point.x += x;
+                        quad.point.y += y;
+                      }
+                    }
+                    return x1 > nx2
+                        || x2 < nx1
+                        || y1 > ny2
+                        || y2 < ny1;
+                });
+      }
+    };
 </script>
