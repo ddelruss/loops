@@ -30,8 +30,8 @@ line {
 
 <script type="text/javascript">
 
-var width = 2500,
-    height = 1500,
+var width = 1600,
+    height = 1200,
     boxWidth = 150,
     boxHeight = 40,
     radius = 35,
@@ -70,7 +70,8 @@ var width = 2500,
 	   .attr("x", -boxWidth/2)
 	   .attr("y", -boxHeight/2)
 	   .attr("width", boxWidth)
-	   .attr("height", function(d) { return d.title =="" ? boxHeight/2 : boxHeight;})
+	   .attr("height", boxHeight)
+	   // .attr("height", function(d) { return d.title =="" ? boxHeight/2 : boxHeight;})
        .style("stroke", function(d) { 
 			if (d.view == "Positive") return "#1f77b4";
 			if (d.view == "Negative") return "#d62728";
@@ -95,7 +96,7 @@ var width = 2500,
 	      .start();
 
   force.on("tick", function(e) {
-  		var k = 5 * e.alpha, j, target, budge = padding*k;    
+  		var k = 3 * e.alpha, j, target, budge = padding*k;    
         // vertical placement and center the top node(s)
   		json.nodes.forEach(function(d, i) {
 			// bounds check
@@ -106,7 +107,7 @@ var width = 2500,
 
 			// vertical spacing
 			target = boxHeight + (2*boxHeight + padding) * d.bosses;
-			// top node
+			// top node 
 			if (d.bosses == 0) {
 			    d.y = target;
 				if (d.x > width/2) d.x -= budge;
@@ -120,9 +121,22 @@ var width = 2500,
 
 		// try to stay under boss
 		json.links.forEach(function(d,i) {
-			if (Math.abs(d.target.x - d.source.x) > ((d.source.direct_reports-1) * boxWidth)) {
-				if (d.target.x > d.source.x) d.target.x -= 2*budge;
-				else d.target.x += 2*budge;
+			// if you have no direct reports, you go directly under boss...
+			if (d.target.direct_reports == 0) { 
+				d.target.x = d.source.x;
+				// stack the children under the boss
+				var height = d.source.y + 2*boxHeight + padding;
+				json.links.forEach(function(dd, ii) {
+					if (dd.source == d.source && dd.target.direct_reports == 0) {
+						dd.target.y = height;
+						height += boxHeight + 3;
+					}
+				});
+			} else {
+				if (Math.abs(d.target.x - d.source.x) > ((d.source.direct_reports-1) * boxWidth)) {
+					if (d.target.x > d.source.x) d.target.x -= budge;
+					else d.target.x += budge;
+				}
 			}
 		});
 
@@ -130,21 +144,26 @@ var width = 2500,
 		var taken = [];
 		json.nodes.forEach(function(d,i) {
 			for (j = 0; j < taken.length; j++) {
-				var onode = taken[j], cbudge = budge*1.5;
-				// only resolve nodes at the same level
-				if (d.bosses == onode.bosses) {
-					if ((Math.abs(d.y - onode.y) < boxHeight + padding) && (Math.abs(d.x - onode.x) < boxWidth + padding)) {
-		                if (d.x < onode.x) 
-							{ d.x -= cbudge; onode.x += cbudge; }
-						else
-							{ d.x += cbudge; onode.x -= cbudge; }
-							
-		                if (d.y < onode.y) 
-							{ }
-						else
-							{ d.y += budge; }
-							
+				var onode = taken[j];
+				if ((Math.abs(d.y - onode.y) < boxHeight + padding) && (Math.abs(d.x - onode.x) < boxWidth + padding)) {
+					if (d.direct_reports > 0) {
+						if (d.x < onode.x) d.x -= budge;
+						else d.x += budge;
 					}
+					if (onode.direct_reports > 0) {
+						if (d.x < onode.x) onode.x += budge;
+						else onode.x -= budge;
+					}
+				
+				// only resolve nodes at the same level
+				// if (d.bosses == onode.bosses) {
+						// if (d.direct_reports > 0) {
+						// 			                if (d.x < onode.x) 
+						// 		{ d.x -= budge; onode.x += budge; }
+						// 	else
+						// 		{ d.x += budge; onode.x -= budge; }
+						// }
+					// }
 				}
 			}
 			taken.push(d);
