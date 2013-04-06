@@ -30,7 +30,7 @@ line {
 
 <script type="text/javascript">
 
-var width = 1600,
+var width = 1400,
     height = 1200,
     boxWidth = 150,
     boxHeight = 40,
@@ -132,10 +132,11 @@ var width = 1600,
 						height += boxHeight + 3;
 					}
 				});
-			} else {
-				if (Math.abs(d.target.x - d.source.x) > ((d.source.direct_reports-1) * boxWidth)) {
-					if (d.target.x > d.source.x) d.target.x -= budge;
-					else d.target.x += budge;
+			} else { // direct_reports > 0
+				// this test means "too far away"
+				if (Math.abs(d.target.x - d.source.x) > ((d.source.direct_reports-1) * boxWidth + padding + padding)) {
+					if (d.target.x > d.source.x) d.target.x -= (budge+2);
+					else d.target.x += (budge+2);
 				}
 			}
 		});
