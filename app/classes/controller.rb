@@ -68,7 +68,7 @@ module Loops
       }
       output = "{\"nodes\":["      
       filtered_nodes.each {|node|
-        modified_json = node.to_json.chop + ",\"reports\":#{reports_to_count(node.description)},\"direct_reports\":#{direct_reports_to_count(node.description)}}"
+        modified_json = node.to_json.chop + ",\"reports\":#{reports_to_count(node.description)},\"direct_reports\":#{direct_reports_to_count(node.description)},\"bosses\":#{bosses_count(node.description)}}"
         output = output + modified_json + ","
         filtered_nodes = filtered_nodes + [node]
       }
@@ -116,6 +116,19 @@ module Loops
       }
       nil
     end
+
+    def bosses_count(description)
+      @visited_nodes = []
+      count = 0
+      @links.each {|link|
+        if link.source == description && link.label == @reports_to && !@visited_nodes.index(link.target)
+          count += 1 + bosses_count(link.target)
+          @visited_nodes = @visited_nodes + [link.target]
+        end
+      }
+      count
+    end
+    
     def reports_to_count(description)
       @visited_nodes = []
       count = 0
@@ -127,6 +140,7 @@ module Loops
       }
       count
     end
+    
     def direct_reports_to_count(description)
       @visited_nodes = []
       count = 0

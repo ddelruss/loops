@@ -26,28 +26,25 @@ line {
   stroke: #999;
 }
 
-    </style>
+</style>
 
 <script type="text/javascript">
 
-var width = 1200,
-    height = 1200,
+var width = 2500,
+    height = 1500,
     boxWidth = 150,
     boxHeight = 40,
     radius = 35,
 	padding = 5
-
-	var w = 1200,
-	    h = 1000,
-	    r = 6,
-	    fill = d3.scale.category20();
 		
-		var force = d3.layout.force()
-			.gravity(.1)
+	var force = d3.layout.force()
+	// .gravity(.01)
+	.gravity(0)
 			// .friction(.8)
-		    .charge(-600)
-		    .linkDistance(function(d) {return 60 + (d.source.direct_reports > 0 ? 5 * d.source.direct_reports : 0)})
-		    .linkStrength(function(d) { return (d.source.direct_reports > 0 ? 1/Math.sqrt(3*d.source.direct_reports) : 1) })
+		    .charge(0)
+		.linkStrength(0)
+		    // .linkDistance(function(d) {return 60 + (d.source.direct_reports > 0 ? 5 * d.source.direct_reports : 0)})
+		    // .linkStrength(function(d) { return (d.source.direct_reports > 0 ? 1/Math.sqrt(3*d.source.direct_reports) : 1) })
 		    .size([width, height]);
 		
 	var svg = d3.select("body").append("svg:svg")
@@ -63,13 +60,13 @@ var width = 1200,
 	      .style("stroke", "#000000")
 	      .style("stroke-width", 1.0);
 
-  	var node = svg.selectAll(".node")
+  var node = svg.selectAll(".node")
   		.data(json.nodes)
     	.enter().append("g")
       	.attr("class", "node")
       	.call(force.drag);
-
-	node.append("rect")
+      	
+  node.append("rect")
 	   .attr("x", -boxWidth/2)
 	   .attr("y", -boxHeight/2)
 	   .attr("width", boxWidth)
@@ -82,7 +79,7 @@ var width = 1200,
        .style("fill", "white")
        .style("stroke-width", 3.0);
 	
-  	node.append("text")
+  node.append("text")
       .attr("text-anchor", "middle")
       .attr("dy", "-.4em")
       .text(function(d) { return d.name;});
@@ -92,39 +89,74 @@ var width = 1200,
 	    	.attr("dy", ".8em")
 	    	.text(function(d) { return d.title;});
 
-	  force
+	force
 	      .nodes(json.nodes)
 	      .links(json.links)
 	      .start();
 
   force.on("tick", function(e) {
-		var k = 1 * e.alpha, j;
-	    json.links.forEach(function(d, i) {
-	      d.target.y -= d.target.reports*k;
-	      d.source.y += d.source.reports*k;
-		  // if (d.target.x < boxWidth + padding) d.target.x = boxWidth + padding;
-		  if (d.target.y < boxHeight + padding) d.target.y = boxHeight + padding;
-		  d.source.y = (d.target.y - d.source.y < boxHeight + padding) ? d.target.y - boxHeight - padding : d.source.y;	
-	    });
-		taken = [];
-		json.nodes.forEach(function(d, i) {
-			for (j = 0; j < i; j++) {
-				if (Math.abs(d.y - taken[j].y) < boxHeight + padding && Math.abs(d.x - taken[j].x) < boxWidth + padding) {
-					d.y = (d.y > taken[j].y) ? d.y + padding*k : d.y - padding*k;
-					d.x = (d.x > taken[j].x) ? d.x + padding*k : d.x - padding*k;
-					// d.y = taken[j].y + boxHeight + padding;
-					// d.y = taken[j].y + padding;
+  		var k = 5 * e.alpha, j, target, budge = padding*k;    
+        // vertical placement and center the top node(s)
+  		json.nodes.forEach(function(d, i) {
+			// bounds check
+			d.x = (d.x < padding) ? padding : d.x;
+			d.x = (d.x > width - boxWidth) ? width - boxWidth : d.x;
+			d.y = (d.y < padding) ? padding : d.y;
+			d.y = (d.y > height - boxHeight) ? height - boxHeight : d.y;
+
+			// vertical spacing
+			target = boxHeight + (2*boxHeight + padding) * d.bosses;
+			// top node
+			if (d.bosses == 0) {
+			    d.y = target;
+				if (d.x > width/2) d.x -= budge;
+				if (d.x < width/2) d.x += budge;
+			} else {
+				if (d.y > target) d.y -= budge;
+				if (d.y < target) d.y += budge;
+			}
+			
+	  	 });
+
+		// try to stay under boss
+		json.links.forEach(function(d,i) {
+			if (Math.abs(d.target.x - d.source.x) > ((d.source.direct_reports-1) * boxWidth)) {
+				if (d.target.x > d.source.x) d.target.x -= 2*budge;
+				else d.target.x += 2*budge;
+			}
+		});
+
+		// collision resolution
+		var taken = [];
+		json.nodes.forEach(function(d,i) {
+			for (j = 0; j < taken.length; j++) {
+				var onode = taken[j], cbudge = budge*1.5;
+				// only resolve nodes at the same level
+				if (d.bosses == onode.bosses) {
+					if ((Math.abs(d.y - onode.y) < boxHeight + padding) && (Math.abs(d.x - onode.x) < boxWidth + padding)) {
+		                if (d.x < onode.x) 
+							{ d.x -= cbudge; onode.x += cbudge; }
+						else
+							{ d.x += cbudge; onode.x -= cbudge; }
+							
+		                if (d.y < onode.y) 
+							{ }
+						else
+							{ d.y += budge; }
+							
+					}
 				}
 			}
 			taken.push(d);
-		});
-    link.attr("x1", function(d) { return d.source.x; })
-        .attr("y1", function(d) { return d.source.y; })
-        .attr("x2", function(d) { return d.target.x; })
-        .attr("y2", function(d) { return d.target.y; });
-
-    node
-        .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
-  });
+		});		
   
+      link.attr("x1", function(d) { return d.source.x; })
+          .attr("y1", function(d) { return d.source.y; })
+          .attr("x2", function(d) { return d.target.x; })
+          .attr("y2", function(d) { return d.target.y; });
+    
+      node
+          .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+    });
+    
 </script>
