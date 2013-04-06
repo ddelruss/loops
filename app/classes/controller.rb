@@ -83,7 +83,7 @@ module Loops
       output = "{\"nodes\":["      
       @nodes.each {|node|
         if node.node_type.include? "Person"
-          modified_json = node.to_json
+          modified_json = node.to_json.chop + ",\"reports\":#{reports_to_count(node.description)},\"connections\":#{connections_count(node.description, @reports_to)},\"bosses\":#{bosses_count(node.description)}}"
           output = output + modified_json + ","
           filtered_nodes = filtered_nodes + [node]
         end
@@ -153,11 +153,13 @@ module Loops
       count
     end
 
-    def connections_count(description)
+    def connections_count(description, excluding="nothing to exclude")
       count = 0
       @links.each {|link|
-        if link.target == description || link.source == description
-          count += 1
+        if !link.label.include? excluding
+          if link.target == description || link.source == description
+            count += 1
+          end
         end
       }
       count

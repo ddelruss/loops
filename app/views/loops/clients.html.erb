@@ -38,14 +38,10 @@ var width = 1400,
 	padding = 5
 		
 	var force = d3.layout.force()
-	// .gravity(.01)
-	.gravity(0)
-			// .friction(.8)
-		    .charge(0)
+		.gravity(0)
+	    .charge(0)
 		.linkStrength(0)
-		    // .linkDistance(function(d) {return 60 + (d.source.direct_reports > 0 ? 5 * d.source.direct_reports : 0)})
-		    // .linkStrength(function(d) { return (d.source.direct_reports > 0 ? 1/Math.sqrt(3*d.source.direct_reports) : 1) })
-		    .size([width, height]);
+	    .size([width, height]);
 		
 	var svg = d3.select("body").append("svg:svg")
 	    .attr("width", width)
@@ -71,7 +67,6 @@ var width = 1400,
 	   .attr("y", -boxHeight/2)
 	   .attr("width", boxWidth)
 	   .attr("height", boxHeight)
-	   // .attr("height", function(d) { return d.title =="" ? boxHeight/2 : boxHeight;})
        .style("stroke", function(d) { 
 			if (d.view == "Positive") return "#1f77b4";
 			if (d.view == "Negative") return "#d62728";
@@ -115,8 +110,7 @@ var width = 1400,
 			} else {
 				if (d.y > target) d.y -= budge;
 				if (d.y < target) d.y += budge;
-			}
-			
+			}			
 	  	 });
 
 		// try to stay under boss
