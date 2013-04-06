@@ -135,8 +135,8 @@ var width = 1400,
 			} else { // direct_reports > 0
 				// this test means "too far away"
 				if (Math.abs(d.target.x - d.source.x) > ((d.source.direct_reports-1) * boxWidth + padding + padding)) {
-					if (d.target.x > d.source.x) d.target.x -= (budge+2);
-					else d.target.x += (budge+2);
+					if (d.target.x > d.source.x) d.target.x -= (budge+1);
+					else d.target.x += (budge+1);
 				}
 			}
 		});
@@ -155,16 +155,6 @@ var width = 1400,
 						if (d.x < onode.x) onode.x += budge;
 						else onode.x -= budge;
 					}
-				
-				// only resolve nodes at the same level
-				// if (d.bosses == onode.bosses) {
-						// if (d.direct_reports > 0) {
-						// 			                if (d.x < onode.x) 
-						// 		{ d.x -= budge; onode.x += budge; }
-						// 	else
-						// 		{ d.x += budge; onode.x -= budge; }
-						// }
-					// }
 				}
 			}
 			taken.push(d);
