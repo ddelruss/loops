@@ -65,8 +65,8 @@ var force = d3.layout.force()
 
   node.append("circle")
           .attr("class", "node")
-          .attr("r", radius)
-          .style("fill", function(d) { if (d.node_type == "Client Person") return "#1f77b4"; else return "orange"; })
+          .attr("r", function(d) {return ((50-5*d.bosses > radius) && (d.node_type == "Client Person")) ?  50-5*d.bosses : radius; })
+          .style("fill", function(d) { return d.node_type == "Client Person" ? "#1f77b4" : "orange"; })
           .style("stroke", "#000000")
           .style("stroke-width", 3.0)
           .attr("x", -radius)
@@ -76,12 +76,12 @@ var force = d3.layout.force()
           
   node.append("text")
       .attr("text-anchor", "middle")
-      .attr("dy", "2.5em")
-      // .attr("dy", function(d){return d.x < height/2 ? "-2em" : "3em";})
+      // .attr("dy", "4em")
+      .attr("dy", function(d){return d.node_type == "Client Person" ? "4.5em" : "2.5em";})
       .text(function(d) { return d.name });
 
   force.on("tick", function(e) {
-	var k = 1 * e.alpha, budge = padding*k, border = 2*radius
+	var k = 1 * e.alpha, budge = padding*k, border = 4*radius
 	json.nodes.forEach(function(d) {
 		
 		// 1 connection is your organization, so 1 means no connections on the graph
