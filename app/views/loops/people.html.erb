@@ -2,7 +2,7 @@ People
 <% if flash[:message1] %>
 	<div><%= flash[:message1] %></div>
 <% end %>
-<div><%= raw(@graph_json_people) %></div>
+<!-- <div><%= raw(@graph_json_people) %></div> -->
 
 <% if flash[:message2] %>
 <div><%= flash[:message2] %></div>
@@ -68,13 +68,13 @@ var force = d3.layout.force()
           .attr("r", function(d) {return ((50-5*d.bosses > radius) && (d.node_type == "Client Person")) ?  50-5*d.bosses : radius; })
           .style("fill", function(d) { return d.node_type == "Client Person" ? "#1f77b4" : "orange"; })
           .style("stroke", "#000000")
-          .style("stroke-width", 3.0)
+          .style("stroke-width", 1.0)
           .attr("x", -radius)
           .attr("y", -radius)
           .attr("width", 2 * radius)
           .attr("height", 2 * radius)
-		  .on("mouseover", function(node){hideLinks(node);})
-		  .on("mouseout", function(){link.style("stroke-width", 3);});
+		  .on("mouseover", function(node){hideLinks(node, this);})
+		  .on("mouseout", function(){link.style("stroke-width", 2); d3.select(this).style("stroke-width", 1); });
           
   // selection.on("mouseover", function() { hideLinks(this.parentNode); })
   //          .on("mouseout", function() { showLinks(); });
@@ -108,11 +108,12 @@ var force = d3.layout.force()
     node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
   });
 
-	var hideLinks = function(except_node) {
+	var hideLinks = function(except_node, element) {
+		d3.select(element).style("stroke-width", 3);
 		if (except_node.connections > 1) {
-		link.style("stroke-width", function (d) {
-			return (d.target == except_node || d.source == except_node) ? 5 : 1;
-		});
+			link.style("stroke-width", function (d) {
+				return (d.target == except_node || d.source == except_node) ? 5 : 1;
+			});
 		}
 	};
 

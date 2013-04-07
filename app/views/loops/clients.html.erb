@@ -67,22 +67,24 @@ var width = 1400,
 	   .attr("y", -boxHeight/2)
 	   .attr("width", boxWidth)
 	   .attr("height", boxHeight)
-       .style("stroke", function(d) { 
+       .style("stroke", "black" )
+       .style("fill", function(d) { 
 			if (d.view == "Positive") return "#1f77b4";
 			if (d.view == "Negative") return "#d62728";
 			if (d.view == "Neutral") return "#8c564b"; 
 			return "#7f7f7f";})
-       .style("fill", "white")
-       .style("stroke-width", 3.0);
+       .style("stroke-width", 1.0);
 	
   node.append("text")
       .attr("text-anchor", "middle")
       .attr("dy", "-.4em")
+	  .style("fill", "white")
       .text(function(d) { return d.name;});
 
 	node.append("text")
 	    	.attr("text-anchor", "middle")
 	    	.attr("dy", ".8em")
+		    .style("fill", "white")
 	    	.text(function(d) { return d.title;});
 
 	force
