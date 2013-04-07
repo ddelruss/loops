@@ -1,4 +1,4 @@
-  <%= form_for @current_login, :url => {:action => "nodes"}, :method => "get" do |f| %>
+  <%= form_for @current_login, :url => {:action => "nodes"}, :method => "post" do |f| %>
     Google User ID:
     <%= f.text_field :user %>
     <p>
