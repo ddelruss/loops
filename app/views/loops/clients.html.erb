@@ -7,7 +7,6 @@
 <div><%= flash[:message2] %></div>
 <% end %>
 
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -49,11 +48,11 @@ var width = 1400,
 	var json =  <%= raw(@graph_json_clients) %>
 
 	var link = svg.selectAll("line")
-	      .data(json.links)
+	    .data(json.links)
 	    .enter().append("svg:line")  
 	    .attr("class", "link")
-	      .style("stroke", "#000000")
-	      .style("stroke-width", 1.0);
+	    .style("stroke", "#000000")
+	    .style("stroke-width", 1.0);
 
   var node = svg.selectAll(".node")
   		.data(json.nodes)
@@ -81,13 +80,12 @@ var width = 1400,
       .text(function(d) { return d.name;});
 
 	node.append("text")
-	    	.attr("text-anchor", "middle")
-	    	.attr("dy", ".8em")
-		    .style("fill", "white")
-	    	.text(function(d) { return d.title;});
+	  .attr("text-anchor", "middle")
+	  .attr("dy", ".8em")
+	  .style("fill", "white")
+	  .text(function(d) { return d.title;});
 
-	force
-	      .nodes(json.nodes)
+	force.nodes(json.nodes)
 	      .links(json.links)
 	      .start();
 
@@ -160,8 +158,7 @@ var width = 1400,
           .attr("x2", function(d) { return d.target.x; })
           .attr("y2", function(d) { return d.target.y; });
     
-      node
-          .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+      node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
     });
     
 </script>
