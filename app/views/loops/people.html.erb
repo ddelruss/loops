@@ -72,8 +72,13 @@ var force = d3.layout.force()
           .attr("x", -radius)
           .attr("y", -radius)
           .attr("width", 2 * radius)
-          .attr("height", 2 * radius);
+          .attr("height", 2 * radius)
+		  .on("mouseover", function(node){hideLinks(node);})
+		  .on("mouseout", function(){link.style("stroke-width", 3);});
           
+  // selection.on("mouseover", function() { hideLinks(this.parentNode); })
+  //          .on("mouseout", function() { showLinks(); });
+
   node.append("text")
       .attr("text-anchor", "middle")
       // .attr("dy", "4em")
@@ -94,10 +99,7 @@ var force = d3.layout.force()
 		d.y = (d.y < border) ? border : d.y;
 		d.y = (d.y > height - border) ? height - border : d.y;
 		
-	});
-
-	
-	
+	});	
     link.attr("x1", function(d) { return d.source.x; })
         .attr("y1", function(d) { return d.source.y; })
         .attr("x2", function(d) { return d.target.x; })
@@ -105,5 +107,13 @@ var force = d3.layout.force()
 
     node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
   });
+
+	var hideLinks = function(except_node) {
+		if (except_node.connections > 1) {
+		link.style("stroke-width", function (d) {
+			return (d.target == except_node || d.source == except_node) ? 5 : 1;
+		});
+		}
+	};
 
 </script>
