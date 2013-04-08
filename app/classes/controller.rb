@@ -6,6 +6,8 @@ module Loops
       @nodes = []
       @links = []
       @reports_to = "Reports To"
+      @on_project = "On Project"
+      @company_person = "Company Person"
       
       #seed data with two organizations
       @nodes = @nodes + [Node.new("Organization,#{@client_name}"), Node.new("ThoughtWorks,#{@company_name}")]
@@ -24,7 +26,7 @@ module Loops
       # second worksheet is source organization with format Name (that's it)
       ws = document.worksheet(1)
       for row in 2..ws.num_rows
-        @nodes = @nodes + [Node.new("Company Person,#{ws[row, 1]},#{ws[row, 2]}")]
+        @nodes = @nodes + [Node.new("#{@company_person},#{ws[row, 1]},#{ws[row, 2]}")]
         @links = @links + [Link.new("#{@company_name}, #{ws[row, 1]},Employee")]
       end      
       # third worksheet is links from anyone to anyone
@@ -39,7 +41,17 @@ module Loops
           @links = @links + [Link.new("#{ws[row, 1]}, #{ws[row, 4]},#{@reports_to}")]
         end
       end      
-      
+      # back to the second sheet for projects
+      ws = document.worksheet(1)
+      processed = []
+      for row in 2..ws.num_rows
+        project_name = ws[row, 3]
+        if (!processed.include?(project_name))
+          @nodes = @nodes + [Node.new("Project,#{project_name}")]
+          processed.push(project_name)
+        end
+        @links = @links + [Link.new("#{ws[row, 1]},#{project_name},#{@on_project}")]  
+      end      
     end
     attr_reader :nodes, :links
     def node_count()
@@ -90,6 +102,21 @@ module Loops
       }
       output = output.chop + "],\"links\":["
       output = write_json_links(output, filtered_nodes, @reports_to)
+      output = output.chop + "]}"
+    end
+
+    def d3_graph_json_projects
+      filtered_nodes = []
+      output = "{\"nodes\":["      
+      @nodes.each {|node|
+        if ((node.node_type.include? "Project") || (node.node_type.include? @company_person))
+          modified_json = node.to_json
+          output = output + modified_json + ","
+          filtered_nodes = filtered_nodes + [node]
+        end
+      }
+      output = output.chop + "],\"links\":["
+      output = write_json_links(output, filtered_nodes)
       output = output.chop + "]}"
     end
 

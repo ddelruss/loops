@@ -1,0 +1,126 @@
+
+<% if flash[:message1] %>
+	<div><%= flash[:message1] %></div>
+<% end %>
+<div><%= raw(@graph_json_projects) %></div>
+
+<% if flash[:message2] %>
+<div><%= flash[:message2] %></div>
+<% end %>
+
+
+<!DOCTYPE html>
+<html>
+<head>
+    <script type="text/javascript" src="http://mbostock.github.com/d3/d3.js"></script>
+</head>
+<body>
+<div id="viz"></div>
+<script type="text/javascript">
+
+var width = 1200,
+    height = 1000,
+	fill = d3.scale.category20(),
+	padding = 5,
+    radius = 20,
+	group_count
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+var json =  <%= raw(@graph_json_projects) %>
+
+var force = d3.layout.force()
+    .gravity(.05)
+    .distance(40)
+    .linkStrength(.3)
+    .charge(-800)
+    .size([width, height]);
+
+  force.nodes(json.nodes)
+      .links(json.links)
+      .start();
+
+  var link = svg.selectAll(".link")
+      .data(json.links)
+    .enter().append("line")
+      .attr("class", "link")
+      .style("stroke", function(d) { 
+			if (d.label == "Strong") return "green";
+			if (d.label == "Negative") return "#d62728";
+			if (d.label == "Weak") return "#8c564b"; 
+			return "#7f7f7f";})
+      .style("stroke-width", 3.0);
+
+  var node = svg.selectAll(".node")
+      .data(json.nodes)
+    .enter().append("g")
+      .attr("class", "node")
+      .call(force.drag);
+
+  node.append("circle")
+          .attr("class", "node")
+          .attr("r", function(d) {return (d.node_type == "Project") ?  40 : radius; })
+		  .style("fill", function(d, i) { 	
+				if (d.node_type == "Project") return fill(d.name);		
+				else {	
+					for (var j = 0; j < json.links.length; j++) {
+						if (json.links[j].target.name == d.name) {
+							return fill(json.links[j].source.name);
+						}
+				}};
+				return "gray";
+			})
+		  .style("stroke", "#000000")
+          .style("stroke-width", 1.0)
+          .attr("x", -radius)
+          .attr("y", -radius)
+          .attr("width", 2 * radius)
+          .attr("height", 2 * radius)
+		  .on("mouseover", function(node){hideLinks(node, this);})
+		  .on("mouseout", function(){link.style("stroke-width", 2); d3.select(this).style("stroke-width", 1); });
+          
+  node.append("text")
+      .attr("text-anchor", "middle")
+      .attr("dy", function(d){return d.node_type == "Project" ? "4.5em" : "2.5em";})
+      .text(function(d) { return d.name });
+
+  force.on("tick", function(e) {
+	var k = 1 * e.alpha, budge = padding*k, border = 4*radius
+	json.nodes.forEach(function(d) {
+		
+		d.x = (d.x < border) ? border : d.x;
+		d.x = (d.x > width - border) ? width - border : d.x;
+		d.y = (d.y < border) ? border : d.y;
+		d.y = (d.y > height - border) ? height - border : d.y;		
+	});	
+    link.attr("x1", function(d) { return d.source.x; })
+        .attr("y1", function(d) { return d.source.y; })
+        .attr("x2", function(d) { return d.target.x; })
+        .attr("y2", function(d) { return d.target.y; });
+
+    node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+  });
+
+    var colorForNode = function(node) {
+		return "yellow";
+		// if (d.node_type == "Project") return fill(d.name);
+		// if (d.node_type == "Project") return "green";
+		// 
+		// return "purple";
+		// json.links.forEach(function(d) {
+		// 	if (d.target == node) return fill(d.source.name);
+		// });
+	}
+	
+	var hideLinks = function(except_node, element) {
+		d3.select(element).style("stroke-width", 3);
+		// if (except_node.connections > 1) {
+		// 	link.style("stroke-width", function (d) {
+		// 		return (d.target == except_node || d.source == except_node) ? 5 : 1;
+		// 	});
+		// }
+	};
+
+</script>

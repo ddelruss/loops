@@ -11,9 +11,10 @@ class LoopsController < ApplicationController
     @graph_json = @controller.d3_graph_json
     @graph_json_clients = @controller.d3_graph_json_clients_only
     @graph_json_people = @controller.d3_graph_json_people_no_organizations
+    @graph_json_projects = @controller.d3_graph_json_projects
               
     if params[:commit].eql?("Hierarchy")
-      render :action => "clients"
+      render :action => "hierarchy"
     end
     if params[:commit].eql?("Relationships")
       render :action => "people"
@@ -21,9 +22,9 @@ class LoopsController < ApplicationController
     if params[:commit].eql?("Connections")
       render :action => "connections"
     end
-    # if params[:commit].eql?("Diagram 1")
-    #   render :action => "diagram1"
-    # end
+    if params[:commit].eql?("Projects")
+      render :action => "projects"
+    end
   end
   
   def connections
