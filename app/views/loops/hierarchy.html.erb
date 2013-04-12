@@ -28,13 +28,110 @@ line {
 
 <script type="text/javascript">
 
-var width = 1400,
-    height = 2000,
+var width = 1500,
+    height = 1000,
     boxWidth = 150,
     boxHeight = 40,
-    radius = 35,
-	padding = 5
+	padding = 5,
+	vSpace = 4*(boxHeight + padding),
+	hSpace = boxWidth + padding,
+    radius = 35
+
+	var snodes = [], roots = [], max_bosses = 0;
+	var json =  <%= raw(@graph_json_clients) %>
+	snodes = Array.prototype.slice.call(json.nodes);
+	slinks = Array.prototype.slice.call(json.links);
+	
+	// snodes.sort(function(a,b) {return b.direct_reports - a.direct_reports;}); not sorting because links won't work
+
+	var number_of_roots = 0;
+	// get roots and also set the default values and arrays
+	for (j = 0; j < snodes.length; j++) {
+		if ((snodes[j]).bosses == 0) {
+			roots.push(snodes[j]);
+		}
+		number_of_roots += snodes[j].bosses == 0 ? 1 : 0;
+		snodes[j].leaves = [];
+		snodes[j].managers = [];
+		snodes[j].nodeWidth = 0;
+	}
 		
+	// set children (managers, leaves) for each node
+	var parent, child, slink;
+	for (j = 0; j < slinks.length; j++) {
+		slink = slinks[j];
+		parent = snodes[slink.source];
+		child = snodes[slink.target];
+		if (child.reports == 0) {
+			parent.leaves.push(child);
+			max_bosses = child.bosses > max_bosses ? child.bosses : max_bosses;
+		} else {
+			parent.managers.push(child);
+		}
+	}
+	height = 1000 + (max_bosses * vSpace);
+
+	function computeNodeWidth(node) {
+		//	root nodes are 1 wide, others are 0 because they are under another node
+		var nodeWidth = node.leaves.length > 0 ? 1 : 0;
+		for(var k = 0; k < node.managers.length; k++) {
+			node.managers[k].nodeWidth = computeNodeWidth(node.managers[k]);
+			nodeWidth += node.managers[k].nodeWidth;
+		}
+		return nodeWidth;		
+	}
+
+	// compute width per node from the roots
+	width = 500;
+	for (j = 0; j < roots.length; j++) {
+		roots[j].nodeWidth += computeNodeWidth(roots[j]);
+		width += (roots[j].nodeWidth * hSpace);
+	}
+		
+	// layout the x, y for each node relative to the parent node, like a stair case from the root
+	var cnode, currentX = hSpace;
+	for (var k=0; k < roots.length; k++) {
+		cnode = roots[k];
+		cnode.x = currentX;
+		cnode.y = vSpace;
+		layout_children(cnode);
+		currentX += (cnode.nodeWidth * hSpace);
+	}
+		
+	function layout_children(node) {
+		// layout leaves directly under node
+		var m, dnode, nodeX = 0;
+		if (node.leaves.length > 0) {
+			for (m = 0; m < node.leaves.length; m++) {
+				dnode = node.leaves[m];
+				dnode.x = node.x;
+				dnode.y = node.y + vSpace + (boxHeight*m);
+			}
+			nodeX += hSpace;
+		}
+		for (m = 0; m < node.managers.length; m++) {
+			dnode = node.managers[m];
+			dnode.x = node.x + nodeX;
+			dnode.y = node.y + vSpace;
+			layout_children(dnode);
+			nodeX += (dnode.nodeWidth * hSpace);
+		}		
+	}
+	
+	// move managers to the center of their width
+	for (var n = 0; n < snodes.length; n++) {
+		cnode = snodes[n];
+		if (cnode.nodeWidth > 1) {
+			cnode.x += (((cnode.nodeWidth-1) * hSpace)/2);
+		}
+	}
+		
+	var color_hash = {  0 : ["Positive", "green"],
+					    1 : ["Negative", "red"],
+					    2 : ["Neutral", "brown"],
+					    3 : ["", "gray"]
+					  }
+	    
 	var force = d3.layout.force()
 		.gravity(0)
 	    .charge(0)
@@ -45,8 +142,6 @@ var width = 1400,
 	    .attr("width", width)
 	    .attr("height", height);
 
-	var json =  <%= raw(@graph_json_clients) %>
-
 	var link = svg.selectAll("line")
 	    .data(json.links)
 	    .enter().append("svg:line")  
@@ -54,13 +149,14 @@ var width = 1400,
 	    .style("stroke", "#000000")
 	    .style("stroke-width", 1.0);
 
-  var node = svg.selectAll(".node")
-  		.data(json.nodes)
-    	.enter().append("g")
+  	var node = svg.selectAll(".node")
+  		.data(snodes)
+    	.enter()
+		.append("g")
       	.attr("class", "node")
       	.call(force.drag);
-      	
-  node.append("rect")
+  	
+  	node.append("rect")
 	   .attr("x", -boxWidth/2)
 	   .attr("y", -boxHeight/2)
 	   .attr("width", boxWidth)
@@ -73,7 +169,7 @@ var width = 1400,
 			return "#7f7f7f";})
        .style("stroke-width", 1.0);
 	
-  node.append("text")
+  	node.append("text")
       .attr("text-anchor", "middle")
       .attr("dy", "-.4em")
 	  .style("fill", "white")
@@ -85,74 +181,33 @@ var width = 1400,
 	  .style("fill", "white")
 	  .text(function(d) { return d.title;});
 
-	force.nodes(json.nodes)
+	// add legend   
+	// var legend = svg.append("g")
+	//   .attr("class", "legend")
+	//   .attr("height", 100)
+	//   .attr("width", 100)
+	//       .attr('transform', 'translate(20,50)')    
+	// 
+	// legend.selectAll("circle")
+	//       .data(snodes)
+	//       .enter()
+	//       .append("circle")
+	// 	  .attr("x", 10)
+	//       .attr("y", function(d, i){ return i *  20;})
+	// 	  .attr("width", 10)
+	// 	  .attr("height", 10)
+	// 	  .style("fill", "blue")
+			  // .style("fill", function(d) { 
+		  // 	        var color = color_hash[dataset.indexOf(d)][1];
+		  // 	        return color;
+		  // 	      })
+	
+	force.nodes(snodes)
 	      .links(json.links)
 	      .start();
 
-  force.on("tick", function(e) {
-  		var k = 3 * e.alpha, j, target, budge = padding*k;    
-        // vertical placement and center the top node(s)
-  		json.nodes.forEach(function(d, i) {
-			// bounds check
-			d.x = (d.x < padding) ? padding : d.x;
-			d.x = (d.x > width - boxWidth) ? width - boxWidth : d.x;
-			d.y = (d.y < padding) ? padding : d.y;
-			d.y = (d.y > height - boxHeight) ? height - boxHeight : d.y;
 
-			// vertical spacing
-			target = boxHeight + (2*boxHeight + padding) * d.bosses;
-			// top node 
-			if (d.bosses == 0) {
-			    d.y = target;
-				if (d.x > width/2) d.x -= budge;
-				if (d.x < width/2) d.x += budge;
-			} else {
-				if (d.y > target) d.y -= budge;
-				if (d.y < target) d.y += budge;
-			}			
-	  	 });
-
-		// try to stay under boss
-		json.links.forEach(function(d,i) {
-			// if you have no direct reports, you go directly under boss...
-			if (d.target.direct_reports == 0) { 
-				d.target.x = d.source.x;
-				// stack the children under the boss
-				var height = d.source.y + 2*boxHeight + padding;
-				json.links.forEach(function(dd, ii) {
-					if (dd.source == d.source && dd.target.direct_reports == 0) {
-						dd.target.y = height;
-						height += boxHeight + 3;
-					}
-				});
-			} else { // direct_reports > 0
-				// this test means "too far away"
-				if (Math.abs(d.target.x - d.source.x) > ((d.source.direct_reports-1) * boxWidth + padding + padding)) {
-					if (d.target.x > d.source.x) d.target.x -= (budge+1);
-					else d.target.x += (budge+1);
-				}
-			}
-		});
-
-		// collision resolution
-		var taken = [];
-		json.nodes.forEach(function(d,i) {
-			for (j = 0; j < taken.length; j++) {
-				var onode = taken[j];
-				if ((Math.abs(d.y - onode.y) < boxHeight + padding) && (Math.abs(d.x - onode.x) < boxWidth + padding)) {
-					if (d.direct_reports > 0) {
-						if (d.x < onode.x) d.x -= budge;
-						else d.x += budge;
-					}
-					if (onode.direct_reports > 0) {
-						if (d.x < onode.x) onode.x += budge;
-						else onode.x -= budge;
-					}
-				}
-			}
-			taken.push(d);
-		});		
-  
+  	force.on("tick", function(e) {		  	
       link.attr("x1", function(d) { return d.source.x; })
           .attr("y1", function(d) { return d.source.y; })
           .attr("x2", function(d) { return d.target.x; })
