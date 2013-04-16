@@ -95,6 +95,10 @@ var width = 1500,
 		cnode.x = currentX;
 		cnode.y = vSpace;
 		layout_children(cnode);
+		// move managers to the center of their width
+		if (cnode.nodeWidth > 1) {
+			cnode.x += (((cnode.nodeWidth-1) * hSpace)/2)
+		}
 		currentX += (cnode.nodeWidth * hSpace);
 	}
 		
@@ -117,15 +121,7 @@ var width = 1500,
 			nodeX += (dnode.nodeWidth * hSpace);
 		}		
 	}
-	
-	// move managers to the center of their width
-	for (var n = 0; n < snodes.length; n++) {
-		cnode = snodes[n];
-		if (cnode.nodeWidth > 1) {
-			cnode.x += (((cnode.nodeWidth-1) * hSpace)/2);
-		}
-	}
-		
+			
 	var color_hash = {  0 : ["Positive", "green"],
 					    1 : ["Negative", "red"],
 					    2 : ["Neutral", "brown"],
