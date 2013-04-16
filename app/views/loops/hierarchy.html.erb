@@ -121,13 +121,28 @@ var width = 1500,
 			nodeX += (dnode.nodeWidth * hSpace);
 		}		
 	}
-			
-	var color_hash = {  0 : ["Positive", "green"],
-					    1 : ["Negative", "red"],
-					    2 : ["Neutral", "brown"],
-					    3 : ["", "gray"]
-					  }
-	    
+
+    var legend_dataset = [
+        [ 
+            {view: "Positive"}
+        ],
+        [
+        	{view: "Negative"}
+        ],
+        [
+        	{view: "Neutral"}
+        ],
+        [
+        	{view: ""}
+        ]
+    ];
+	
+	var color_hash = {  0 : ["Positive", "#1f77b4"],
+    					1 : ["Negative", "#d62728"],
+    					2 : ["Neutral", "#8c564b"],
+					    3 : ["No Entry", "#7f7f7f"]
+					  }                      					
+    
 	var force = d3.layout.force()
 		.gravity(0)
 	    .charge(0)
@@ -178,26 +193,34 @@ var width = 1500,
 	  .text(function(d) { return d.title;});
 
 	// add legend   
-	// var legend = svg.append("g")
-	//   .attr("class", "legend")
-	//   .attr("height", 100)
-	//   .attr("width", 100)
-	//       .attr('transform', 'translate(20,50)')    
-	// 
-	// legend.selectAll("circle")
-	//       .data(snodes)
-	//       .enter()
-	//       .append("circle")
-	// 	  .attr("x", 10)
-	//       .attr("y", function(d, i){ return i *  20;})
-	// 	  .attr("width", 10)
-	// 	  .attr("height", 10)
-	// 	  .style("fill", "blue")
-			  // .style("fill", function(d) { 
-		  // 	        var color = color_hash[dataset.indexOf(d)][1];
-		  // 	        return color;
-		  // 	      })
-	
+		var legend = svg.append("g")
+		  .attr("class", "legend")
+		  .attr("height", 100)
+		  .attr("width", 100)
+	    .attr('transform', 'translate(0,50)')    
+
+
+	    legend.selectAll('circle')
+	      .data(legend_dataset)
+	      .enter()
+	      .append("circle")
+		  .attr("cx", 50)
+	      .attr("cy", function(d, i){ return i *  30;})
+		  .attr("r", 10)
+		  .style("fill", function(d) { 
+	        return color_hash[legend_dataset.indexOf(d)][1];
+	      })
+		  
+		legend.selectAll('text')
+			.data(legend_dataset)
+  	      	.enter()
+	      	.append("text")
+			.attr("x", 63)
+	      	.attr("y", function(d, i){ return i *  30 + 4;})
+		    .text(function(d) {
+	  	        return color_hash[legend_dataset.indexOf(d)][0];
+	  	     });
+		
 	force.nodes(snodes)
 	      .links(json.links)
 	      .start();
