@@ -18,8 +18,11 @@
 <div id="viz"></div>
 <script type="text/javascript">
 
-var width = 1400,
-    height = 1000,
+
+var json =  <%= raw(@graph_json_projects) %>
+
+var width = json.nodes.length > 10 ? 600 + (json.nodes.length * 6) : 800,
+    height = width,
 	fill = d3.scale.category20(),
 	padding = 5,
     radius = 10,
@@ -29,13 +32,11 @@ var svg = d3.select("body").append("svg")
     .attr("width", width)
     .attr("height", height);
 
-var json =  <%= raw(@graph_json_projects) %>
-
 var force = d3.layout.force()
     .gravity(.15)
     .distance(30)
     .linkStrength(.3)
-    .charge(-400)
+    .charge(-600)
     .size([width, height]);
 
   force.nodes(json.nodes)
