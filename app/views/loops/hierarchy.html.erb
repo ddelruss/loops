@@ -28,8 +28,8 @@ line {
 
 <script type="text/javascript">
 
-var width = 1500,
-    height = 1000,
+var width,
+    height,
     boxWidth = 150,
     boxHeight = 40,
 	padding = 5,
@@ -147,6 +147,9 @@ var width = 1500,
 		.gravity(0)
 	    .charge(0)
 		.linkStrength(0)
+		.friction(0)
+		.alpha(0)
+		.theta(0)
 	    .size([width, height]);
 		
 	var svg = d3.select("body").append("svg:svg")
@@ -225,7 +228,6 @@ var width = 1500,
 	      .links(json.links)
 	      .start();
 
-
   	force.on("tick", function(e) {		  	
       link.attr("x1", function(d) { return d.source.x; })
           .attr("y1", function(d) { return d.source.y; })
@@ -233,6 +235,7 @@ var width = 1500,
           .attr("y2", function(d) { return d.target.y; });
     
       node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+	  force.stop();
     });
     
 </script>
