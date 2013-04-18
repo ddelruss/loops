@@ -18,11 +18,11 @@
 <div id="viz"></div>
 <script type="text/javascript">
 
-var width = 1200,
+var width = 1400,
     height = 1000,
 	fill = d3.scale.category20(),
 	padding = 5,
-    radius = 20,
+    radius = 10,
 	group_count
 
 var svg = d3.select("body").append("svg")
@@ -32,10 +32,10 @@ var svg = d3.select("body").append("svg")
 var json =  <%= raw(@graph_json_projects) %>
 
 var force = d3.layout.force()
-    .gravity(.05)
-    .distance(40)
+    .gravity(.15)
+    .distance(30)
     .linkStrength(.3)
-    .charge(-800)
+    .charge(-400)
     .size([width, height]);
 
   force.nodes(json.nodes)
@@ -61,7 +61,7 @@ var force = d3.layout.force()
 
   node.append("circle")
           .attr("class", "node")
-          .attr("r", function(d) {return (d.node_type == "Project") ?  40 : radius; })
+          .attr("r", function(d) {return (d.node_type == "Project") ?  30 : radius; })
 		  .style("fill", function(d, i) { 	
 				if (d.node_type == "Project") return fill(d.name);		
 				else {	
@@ -83,7 +83,7 @@ var force = d3.layout.force()
           
   node.append("text")
       .attr("text-anchor", "middle")
-      .attr("dy", function(d){return d.node_type == "Project" ? "4.5em" : "2.5em";})
+      .attr("dy", function(d){return d.node_type == "Project" ? ".35em" : "2em";})
       .text(function(d) { return d.name });
 
   force.on("tick", function(e) {

@@ -1,0 +1,7 @@
+For Git:
+git push origin
+
+For Heroku:
+rake assets:precompile
+git push heroku master
+heroku restart
