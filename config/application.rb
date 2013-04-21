@@ -12,6 +12,8 @@ end
 module Loops
   class Application < Rails::Application
     
+    config.assets.precompile += %w[loops.png]
+    
     # Heroku requires this to be false
     config.assets.initialize_on_precompile=false
     
