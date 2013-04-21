@@ -14,9 +14,17 @@
 </head>
 <body>
 	<div id="header">
-	      <label for="search">Search: </label>
-	      <input type="text" id="search" onkeyup="update(this.value)">
-	    </div>
+		<label for="search">Search: </label>
+	    <input type="text" id="search" onkeyup="update(this.value)">
+	</div>
+	<br>
+	<div>
+		<label for="scale">Scale: </label>
+	    <input type="number" id="scale" value="100" min="1" max="500" step="1" onkeyup="update_scale(this.value)">
+		<label for="percent">%</label>
+	</div>
+	<br>
+	<br>
 	
 <div id="viz"></div>
 <style type="text/css">
@@ -35,12 +43,15 @@ line {
 
 var width,
     height,
+	scale = 1,
     boxWidth = 150,
     boxHeight = 40,
 	padding = 5,
-	vSpace = 4*(boxHeight + padding),
+	vSpace = 3*(boxHeight + padding),
 	hSpace = boxWidth + padding,
     radius = 35,
+	name_vspace = -6,
+	title_vspace = 12,
 	search_term = ""
 	
 
@@ -191,57 +202,58 @@ var width,
        .style("stroke-width", 1.0);
 	
   	node.append("text")
-      .attr("text-anchor", "middle")
-      .attr("dy", "-.4em")
-	  .style("fill", "white")
-      .text(function(d) { return d.name;});
+      	.attr("text-anchor", "middle")
+      	.attr("dy", name_vspace)
+	    .attr("class", "name_label")
+	  	.style("fill", "white")
+      	.text(function(d) { return d.name;});
 
 	node.append("text")
-	  .attr("text-anchor", "middle")
-	  .attr("dy", ".8em")
-	  .style("fill", "white")
-	  .text(function(d) { return d.title;});
+	  	.attr("text-anchor", "middle")
+	  	.attr("dy", title_vspace)
+	    .attr("class", "title_label")
+	  	.style("fill", "white")
+	  	.text(function(d) { return d.title;});
 
 	// add legend   
-		var legend = svg.append("g")
-		  .attr("class", "legend")
-		  .attr("height", 100)
-		  .attr("width", 100)
-	    .attr('transform', 'translate(0,50)')    
+	var legend = svg.append("g")
+		.attr("class", "legend")
+	  	.attr("height", 100)
+	  	.attr("width", 100)
+      	.attr('transform', 'translate(0,10)');
 
-
-	    legend.selectAll('circle')
-	      .data(legend_dataset)
-	      .enter()
-	      .append("circle")
-		  .attr("cx", 50)
-	      .attr("cy", function(d, i){ return i *  30;})
-		  .attr("r", 10)
-		  .style("fill", function(d) { 
-	        return color_hash[legend_dataset.indexOf(d)][1];
-	      })
+	legend.selectAll('circle')
+     	.data(legend_dataset)
+	    .enter()
+	    .append("circle")
+		.attr("cx", radius/2)
+	    .attr("cy", function(d, i){ return i *  30;})
+		.attr("r", 10)
+  		.style("fill", function(d) { 
+	      return color_hash[legend_dataset.indexOf(d)][1];
+	    })
 		  
-		legend.selectAll('text')
-			.data(legend_dataset)
-  	      	.enter()
-	      	.append("text")
-			.attr("x", 63)
-	      	.attr("y", function(d, i){ return i *  30 + 4;})
-		    .text(function(d) {
-	  	        return color_hash[legend_dataset.indexOf(d)][0];
-	  	     });
+	legend.selectAll('text')
+		.data(legend_dataset)
+  	   	.enter()
+	   	.append("text")
+		.attr("x", radius/2 + 13)
+	    .attr("y", function(d, i){ return i *  30 + 4;})
+		.text(function(d) {
+	  		return color_hash[legend_dataset.indexOf(d)][0];
+	  	});
 		
 	force.nodes(snodes)
 	      .links(json.links)
 	      .start();
 
   	force.on("tick", function(e) {		  	
-      link.attr("x1", function(d) { return d.source.x; })
-          .attr("y1", function(d) { return d.source.y; })
-          .attr("x2", function(d) { return d.target.x; })
-          .attr("y2", function(d) { return d.target.y; });
+      link.attr("x1", function(d) { return d.source.x * scale; })
+          .attr("y1", function(d) { return d.source.y * scale; })
+          .attr("x2", function(d) { return d.target.x * scale; })
+          .attr("y2", function(d) { return d.target.y * scale; });
     
-      node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+      node.attr("transform", function(d) { return "translate(" + (d.x * scale) + "," + (d.y * scale) + ")"; });
 	  force.stop();
     });
 
@@ -262,6 +274,35 @@ var width,
 				.style("fill-opacity", 1);
 		}
 		search_term = query;
+	};
+
+	function update_scale(new_scale) {
+	  	if (new_scale/100 != scale && new_scale > 0) {
+			scale = new_scale/100;
+		
+	      	link.attr("x1", function(d) { return d.source.x * scale; })
+	          .attr("y1", function(d) { return d.source.y * scale; })
+	          .attr("x2", function(d) { return d.target.x * scale; })
+	          .attr("y2", function(d) { return d.target.y * scale; });
+
+			node.attr("transform", function(d) { return "translate(" + (d.x * scale) + "," + (d.y * scale) + ")"; });
+			node.select("rect")
+				.attr("x", (-boxWidth/2) * scale)
+		   		.attr("y", (-boxHeight/2) * scale)
+				.attr("width", boxWidth*scale)
+			   	.attr("height", boxHeight*scale);
+			node.select('.name_label')
+				.attr("dy", name_vspace*scale)	      	
+				.attr("font-size", (scale*100) + "%");
+			node.select('.title_label')
+				.attr("dy", title_vspace*scale)	      	
+				.attr("font-size", (scale*100) + "%");
+			svg
+			    .attr("width", width*scale)
+			    .attr("height", height*scale);
+				
+}
+		
 	};
 
     
