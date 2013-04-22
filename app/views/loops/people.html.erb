@@ -19,15 +19,24 @@
 	      <label for="search">Search: </label>
 	      <input type="text" id="search" onkeyup="update(this.value)">
 	    </div>
+		<br>
+		<div>
+			<label for="scale">Scale: </label>
+		    <input type="number" id="scale" value="100" min="1" max="500" step="1" onchange="update_scale(this.value)">
+			<label for="percent">%</label>
+		</div>
 <div id="viz"></div>
 <script type="text/javascript">
 
 var json =  <%= raw(@graph_json_people) %>
 
-var width = json.nodes.length > 10 ? 800 + (json.nodes.length * 6) : 800,
+var width = json.nodes.length > 10 ? 1000 + (json.nodes.length * 8) : 800,
     height = width,
 	padding = 5,
     radius = 20,
+	scale = 1,
+	big_vspace = 60,
+	small_vspace = 36,
 	search_term = ""
 
 var svg = d3.select("body").append("svg")
@@ -36,7 +45,7 @@ var svg = d3.select("body").append("svg")
 
 var force = d3.layout.force()
     .gravity(.05)
-    .distance(200)
+    .distance(200*scale)
     .linkStrength(.1)
     .charge(-500)
     .size([width, height]);
@@ -59,48 +68,37 @@ var force = d3.layout.force()
 
   var node = svg.selectAll(".node")
       .data(json.nodes)
-    .enter().append("g")
+      .enter().append("g")
       .attr("class", "node")
       .call(force.drag);
 
   node.append("circle")
           .attr("class", "node")
-          .attr("r", function(d) {return ((50-5*d.bosses > radius) && (d.node_type == "Client Person")) ?  50-5*d.bosses : radius; })
+          .attr("r", function(d) {
+			return ((50-5*d.bosses > radius) && (d.node_type == "Client Person")) ?  (50 - (5 * d.bosses)) * scale : radius*scale; 
+			})
           .style("fill", function(d) { return d.node_type == "Client Person" ? "#1f77b4" : "orange"; })
           .style("stroke", "#000000")
           .style("stroke-width", 1.0)
-          .attr("x", -radius)
-          .attr("y", -radius)
-          .attr("width", 2 * radius)
-          .attr("height", 2 * radius)
+          .attr("x", -radius*scale)
+          .attr("y", -radius*scale)
+          .attr("width", 2 * radius*scale)
+          .attr("height", 2 * radius*scale)
 		  .on("mouseover", function(node){hideLinks(node, this);})
 		  .on("mouseout", function(){link.style("stroke-width", 2); d3.select(this).style("stroke-width", 1); });
           
   node.append("text")
       .attr("text-anchor", "middle")
-      .attr("dy", function(d){return d.node_type == "Client Person" ? "4.8em" : "2.5em";})
+      .attr("dy", function(d){return d.node_type == "Client Person" ? big_vspace*scale : small_vspace*scale;})
       .text(function(d) { return d.name });
 
   force.on("tick", function(e) {
-	var k = 1 * e.alpha, budge = padding*k, border = 4*radius
-	json.nodes.forEach(function(d) {
-		
-		// 1 connection is your organization, so 1 means no connections on the graph. Move to sidelines
-		if (d.connections <= 1) {
-			d.x += d.node_type == "Client Person" ? -budge : budge;
-		}
+    link.attr("x1", function(d) { return d.source.x*scale; })
+        .attr("y1", function(d) { return d.source.y*scale; })
+        .attr("x2", function(d) { return d.target.x*scale; })
+        .attr("y2", function(d) { return d.target.y*scale; });
 
-		d.x = (d.x < border) ? border : d.x;
-		d.x = (d.x > width - border) ? width - border : d.x;
-		d.y = (d.y < border) ? border : d.y;
-		d.y = (d.y > height - border) ? height - border : d.y;		
-	});	
-    link.attr("x1", function(d) { return d.source.x; })
-        .attr("y1", function(d) { return d.source.y; })
-        .attr("x2", function(d) { return d.target.x; })
-        .attr("y2", function(d) { return d.target.y; });
-
-    node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+    node.attr("transform", function(d) { return "translate(" + (d.x *scale) + "," + (d.y *scale) + ")"; });
   });
 
 	var hideLinks = function(except_node, element) {
@@ -130,4 +128,32 @@ var force = d3.layout.force()
 		}
 		search_term = query;
 	};
+	
+	function update_scale(new_scale) {
+	  	if (new_scale/100 != scale && new_scale > 0) {
+			scale = new_scale/100;
+		
+	      	link.attr("x1", function(d) { return d.source.x * scale; })
+	          	.attr("y1", function(d) { return d.source.y * scale; })
+	          	.attr("x2", function(d) { return d.target.x * scale; })
+	          	.attr("y2", function(d) { return d.target.y * scale; });
+
+			node.attr("transform", function(d) { return "translate(" + (d.x * scale) + "," + (d.y * scale) + ")"; });
+			node.select("circle")
+          		.attr("r", function(d) {
+					return ((50-5*d.bosses > radius) && (d.node_type == "Client Person")) ?  (50 - (5 * d.bosses)) * scale : radius * scale; 
+					})
+	          	.attr("x", -radius * scale)
+	          	.attr("y", -radius * scale)
+	          	.attr("width", 2 * radius * scale)
+	          	.attr("height", 2 * radius * scale);
+			node.select('text')
+	      		.attr("dy", function(d){return d.node_type == "Client Person" ? big_vspace*scale : small_vspace*scale;})
+				.attr("font-size", (scale*100) + "%");
+			svg
+			    .attr("width", width*scale)
+			    .attr("height", height*scale);				
+		}
+	};
+	
 </script>

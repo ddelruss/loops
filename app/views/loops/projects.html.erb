@@ -19,6 +19,12 @@
 	      <label for="search">Search: </label>
 	      <input type="text" id="search" onkeyup="update(this.value)">
 	    </div>
+		<br>
+		<div>
+			<label for="scale">Scale: </label>
+		    <input type="number" id="scale" value="100" min="1" max="500" step="1" onchange="update_scale(this.value)">
+			<label for="percent">%</label>
+		</div>
 	
 <div id="viz"></div>
 <script type="text/javascript">
@@ -26,22 +32,25 @@
 
 var json =  <%= raw(@graph_json_projects) %>
 
-var width = json.nodes.length > 10 ? 600 + (json.nodes.length * 6) : 800,
-    height = width,
+var width = json.nodes.length > 10 ? 600 + (json.nodes.length * 10) : 800,
+    height = width*.8,
+	scale = 1,
 	fill = d3.scale.category20(),
 	padding = 5,
     radius = 10,
 	group_count,
+	project_vspace = 44,
+	person_vspace = 22,
 	search_term = ""
 	
 
 var svg = d3.select("body").append("svg")
-    .attr("width", width)
-    .attr("height", height);
+    .attr("width", width * scale)
+    .attr("height", height * scale);
 
 var force = d3.layout.force()
     .gravity(.15)
-    .distance(30)
+    .distance(30*scale)
     .linkStrength(.3)
     .charge(-600)
     .size([width, height]);
@@ -51,19 +60,19 @@ var force = d3.layout.force()
       .start();
 
   var link = svg.selectAll(".link")
-      .data(json.links)
+  	.data(json.links)
     .enter().append("line")
-      .attr("class", "link")
-      .style("stroke", function(d) { 
+    .attr("class", "link")
+    .style("stroke", function(d) { 
 			if (d.label == "Strong") return "green";
 			if (d.label == "Negative") return "#d62728";
 			if (d.label == "Weak") return "#8c564b"; 
 			return "#7f7f7f";})
-      .style("stroke-width", 3.0);
+	.style("stroke-width", 3.0);
 
   var node = svg.selectAll(".node")
       .data(json.nodes)
-    .enter().append("g")
+      .enter().append("g")
       .attr("class", "node")
       .call(force.drag);
 
@@ -82,53 +91,30 @@ var force = d3.layout.force()
 			})
 		  .style("stroke", "#000000")
           .style("stroke-width", 1.0)
-          .attr("x", -radius)
-          .attr("y", -radius)
-          .attr("width", 2 * radius)
-          .attr("height", 2 * radius)
+          .attr("x", -radius * scale)
+          .attr("y", -radius * scale)
+          .attr("width", 2 * radius * scale)
+          .attr("height", 2 * radius * scale)
 		  .on("mouseover", function(node){hideLinks(node, this);})
 		  .on("mouseout", function(){link.style("stroke-width", 2); d3.select(this).style("stroke-width", 1); });
           
   node.append("text")
       .attr("text-anchor", "middle")
-      .attr("dy", function(d){return d.node_type == "Project" ? ".35em" : "2em";})
+      .attr("dy", function(d){return d.node_type == "Project" ? project_vspace * scale : person_vspace * scale;})
       .text(function(d) { return d.name });
 
   force.on("tick", function(e) {
 	var k = 1 * e.alpha, budge = padding*k, border = 4*radius
-	json.nodes.forEach(function(d) {
-		
-		d.x = (d.x < border) ? border : d.x;
-		d.x = (d.x > width - border) ? width - border : d.x;
-		d.y = (d.y < border) ? border : d.y;
-		d.y = (d.y > height - border) ? height - border : d.y;		
-	});	
-    link.attr("x1", function(d) { return d.source.x; })
-        .attr("y1", function(d) { return d.source.y; })
-        .attr("x2", function(d) { return d.target.x; })
-        .attr("y2", function(d) { return d.target.y; });
+    link.attr("x1", function(d) { return d.source.x * scale; })
+        .attr("y1", function(d) { return d.source.y * scale; })
+        .attr("x2", function(d) { return d.target.x * scale; })
+        .attr("y2", function(d) { return d.target.y * scale; });
 
-    node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+    node.attr("transform", function(d) { return "translate(" + (d.x * scale) + "," + (d.y * scale) + ")"; });
   });
 
-    var colorForNode = function(node) {
-		return "yellow";
-		// if (d.node_type == "Project") return fill(d.name);
-		// if (d.node_type == "Project") return "green";
-		// 
-		// return "purple";
-		// json.links.forEach(function(d) {
-		// 	if (d.target == node) return fill(d.source.name);
-		// });
-	}
-	
 	var hideLinks = function(except_node, element) {
 		d3.select(element).style("stroke-width", 3);
-		// if (except_node.connections > 1) {
-		// 	link.style("stroke-width", function (d) {
-		// 		return (d.target == except_node || d.source == except_node) ? 5 : 1;
-		// 	});
-		// }
 	};
 
 	function update(query) {
@@ -148,6 +134,32 @@ var force = d3.layout.force()
 				.style("fill-opacity", 1);
 		}
 		search_term = query;
+	};
+
+	function update_scale(new_scale) {
+	  	if (new_scale/100 != scale && new_scale > 0) {
+			scale = new_scale/100;
+		
+	      	link.attr("x1", function(d) { return d.source.x * scale; })
+	          .attr("y1", function(d) { return d.source.y * scale; })
+	          .attr("x2", function(d) { return d.target.x * scale; })
+	          .attr("y2", function(d) { return d.target.y * scale; });
+
+			node.attr("transform", function(d) { return "translate(" + (d.x * scale) + "," + (d.y * scale) + ")"; });
+			node.select("circle")
+          		.attr("r", function(d) {return (d.node_type == "Project") ?  30 * scale : radius * scale; })
+	          	.attr("x", -radius * scale)
+	          	.attr("y", -radius * scale)
+	          	.attr("width", 2 * radius * scale)
+	          	.attr("height", 2 * radius * scale);
+			node.select('text')
+				.attr("dy", function(d){return d.node_type == "Project" ? project_vspace * scale : person_vspace * scale;})   	
+				.attr("font-size", (scale*100) + "%");
+			svg
+			    .attr("width", width*scale)
+			    .attr("height", height*scale);
+				
+		}
 	};
 
 </script>
