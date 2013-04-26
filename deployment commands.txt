@@ -5,3 +5,13 @@ For Heroku:
 rake assets:precompile
 git push heroku master
 heroku restart
+
+-------
+Asset Pipeline commands (from https://devcenter.heroku.com/articles/rails-asset-pipeline):
+
+RAILS_ENV=production bundle exec rake assets:precompile
+
+make sure public/assets are in git
+
+git add public/assets
+git commit -m "vendor compiled assets"
