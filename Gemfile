@@ -15,6 +15,7 @@ end
 
 gem 'google_drive'
 gem 'highline'
+gem 'd3_rails'
 
 group :production do
   gem 'thin'
