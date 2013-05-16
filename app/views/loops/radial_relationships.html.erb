@@ -1,0 +1,215 @@
+
+<% if flash[:message1] %>
+	<div><%= flash[:message1] %></div>
+<% end %>
+<!-- <div><%= raw(@graph_json_people) %></div> -->
+
+<% if flash[:message2] %>
+<div><%= flash[:message2] %></div>
+<% end %>
+
+
+<!DOCTYPE html>
+<html>
+<body>
+	<div id="header">
+	      <label for="search">Search: </label>
+	      <input type="text" id="search" onkeyup="update(this.value)">
+	    </div>
+		<br>
+		<div>
+			<label for="scale">Scale: </label>
+		    <input type="number" id="scale" value="100" min="1" max="500" step="1" onchange="update_scale(this.value)">
+			<label for="percent">%</label>
+		</div>
+<div id="viz"></div>
+<script type="text/javascript">
+
+var json =  <%= raw(@graph_json_people) %>
+
+var padding = 5,
+    radius = 50,
+	scale = 1,
+	small_vspace = 8,
+	search_term = ""
+
+//calculate size of a single circle layout
+var width = json.nodes.length > 10 ? 1000 + (json.nodes.length * 15) : 800,
+    height = width;
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+// layout the x,y for each node in concentric circles
+var circleArray = Array.prototype.slice.call(json.nodes);
+// sort by node type, and descending 
+circleArray.sort(function(a, b) {
+		if (a.node_type === b.node_type) {
+			return a.connections - b.connections
+		} else {
+			return (a.node_type < b.node_type) ? -1 : 1;
+		}
+});
+
+var nodesInCircle = 16 < circleArray.length ? 16 : circleArray.length, 
+	nodesAlreadyInCircle, 
+	increment, 
+	radial_radius = 6 * radius,
+	center = {"x":width/2, "y":height/2},
+	cnode,
+	start = 0,
+	current;
+	
+while (circleArray.length > 0) {
+	increment = 360 / nodesInCircle;
+	current = start;
+	nodesAlreadyInCircle = 0;
+	while (nodesAlreadyInCircle < nodesInCircle) {
+		cnode = circleArray.pop();
+		cnode.indexForMatching = circleArray.length.toString();
+		cnode.x = center.x + (radial_radius * Math.cos(current * Math.PI / 180));
+		cnode.y = center.y + (radial_radius * Math.sin(current * Math.PI / 180));
+		current += increment;
+		nodesAlreadyInCircle++;				
+	}
+	radial_radius += 4.5 * radius;
+	nodesInCircle = (nodesInCircle * 2) < circleArray.length ? (nodesInCircle * 2) : circleArray.length;
+};
+
+var force = d3.layout.force()
+	.gravity(0)
+    .charge(0)
+	.linkStrength(0)
+	.friction(0)
+	.alpha(0)
+	.theta(0)
+    .size([width, height]);
+
+  force
+      .nodes(json.nodes)
+      .links(json.links)
+      .start();
+
+  var link = svg.selectAll(".link")
+      .data(json.links)
+    .enter().append("line")
+      .attr("class", "link")
+      .style("stroke", function(d) { 
+			if (d.label == "Strong") return "green";
+			if (d.label == "Negative") return "#d62728";
+			if (d.label == "Weak") return "#8c564b"; 
+			return "#7f7f7f";})
+      .style("stroke-width", 4.0);
+
+  var node = svg.selectAll(".node")
+      .data(json.nodes)
+      .enter().append("g")
+      .attr("class", "node")
+      .call(force.drag);
+
+  node.append("circle")
+          .attr("class", "node")
+          .attr("r", function(d) {return radius*scale; })
+          .style("fill", function(d) { return d.node_type == "Client Person" ? "#1f77b4" : "orange"; })
+          .style("stroke", "#000000")
+          .style("stroke-width", 1.0)
+          .attr("x", -radius*scale)
+          .attr("y", -radius*scale)
+          .attr("width", 2 * radius*scale)
+          .attr("height", 2 * radius*scale)
+		  .on("mouseover", function(node){hideLinks(node, this);})
+		  .on("mouseout", function(){
+				link.style("stroke-width", 2); 
+				node.select("circle")
+				.style("fill-opacity", 1) 
+				.style("stroke-width", 1); 
+				node.select("text")
+				.style("fill-opacity", 1);
+				
+			});
+          
+  node.append("text")
+      	.attr("text-anchor", "middle")
+  		.attr("dy", function(d){return small_vspace*scale;})
+      	.text(function(d) { return d.name })
+		.style("font-size", function(d) { return ((d.name.length < 10 ? 18 : 12)*scale) + "px";}); // Poor man's adjustable font
+
+  force.on("tick", function(e) {
+    link.attr("x1", function(d) { return d.source.x*scale; })
+        .attr("y1", function(d) { return d.source.y*scale; })
+        .attr("x2", function(d) { return d.target.x*scale; })
+        .attr("y2", function(d) { return d.target.y*scale; });
+
+    node.attr("transform", function(d) { return "translate(" + (d.x *scale) + "," + (d.y *scale) + ")"; });
+  });
+
+var linkedByIndex = {};
+json.links.forEach(function(d) {
+  linkedByIndex[d.source.indexForMatching + "," + d.target.indexForMatching] = 1;
+  linkedByIndex[d.target.indexForMatching + "," + d.source.indexForMatching] = 1;
+});
+
+function neighboring(a, b) {
+  return linkedByIndex[a.indexForMatching + "," + b.indexForMatching];
+}
+
+	var hideLinks = function(except_node, element) {
+		d3.select(element).style("stroke-width", 3);
+		if (except_node.connections > 1) {
+			link.style("stroke-width", function (d) {
+				return (d.target == except_node || d.source == except_node) ? 5 : 1;
+			});
+			node.select("circle")
+			.style("fill-opacity", function (d) { return (neighboring(except_node, d) || d === except_node) ? 1 : .3; })
+			.style("stroke-width", function(d) { return (neighboring(except_node, d) || d === except_node) ? 3 : 1; });
+			node.select("text")
+			.style("fill-opacity", function (d) { return (neighboring(except_node, d) || d === except_node) ? 1 : .3; });
+		}
+	};
+
+	function update(query) {
+	  	if (query != search_term && query != "") {
+			node.select("circle")
+				.style("stroke-width", function(d) {
+	  				var match = (d.name.indexOf(query) != -1) || (d.title.indexOf(query) != -1) || (d.notes.indexOf(query) != -1);
+	  				return ( match ? 5 : 1);
+				})
+				.style("fill-opacity", function(d) {
+		  			var match = (d.name.indexOf(query) != -1) || (d.title.indexOf(query) != -1) || (d.notes.indexOf(query) != -1);
+		  			return ( match ? 1 : .3);
+				});
+	  	} else if (query == "") {
+			node.select("circle")
+				.style("stroke-width", 1)
+				.style("fill-opacity", 1);
+		}
+		search_term = query;
+	};
+	
+	function update_scale(new_scale) {
+	  	if (new_scale/100 != scale && new_scale > 0) {
+			scale = new_scale/100;
+		
+	      	link.attr("x1", function(d) { return d.source.x * scale; })
+	          	.attr("y1", function(d) { return d.source.y * scale; })
+	          	.attr("x2", function(d) { return d.target.x * scale; })
+	          	.attr("y2", function(d) { return d.target.y * scale; });
+
+			node.attr("transform", function(d) { return "translate(" + (d.x * scale) + "," + (d.y * scale) + ")"; });
+			node.select("circle")
+          		.attr("r", function(d) { return radius*scale;})
+	          	.attr("x", -radius * scale)
+	          	.attr("y", -radius * scale)
+	          	.attr("width", 2 * radius * scale)
+	          	.attr("height", 2 * radius * scale);
+			node.select('text')
+	      		.attr("dy", function(d){return small_vspace*scale;})
+				.style("font-size", function(d) { return ((d.name.length < 10 ? 18 : 12)*scale) + "px";});
+			svg
+			    .attr("width", width*scale)
+			    .attr("height", height*scale);				
+		}
+	};
+	
+</script>

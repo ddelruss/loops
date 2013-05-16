@@ -17,6 +17,10 @@ class LoopsController < ApplicationController
       @graph_json_people = @controller.d3_graph_json_people_no_organizations
       render :action => "people"
     end
+    if params[:commit].eql?("Relationship Circle")
+      @graph_json_people = @controller.d3_graph_json_people_no_organizations
+      render :action => "radial_relationships"
+    end
     if params[:commit].eql?("Projects")
       @graph_json_projects = @controller.d3_graph_json_projects
       render :action => "projects"
