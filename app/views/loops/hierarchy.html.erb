@@ -41,7 +41,7 @@ line {
 var width,
     height,
 	scale = 1,
-    boxWidth = 150,
+    boxWidth = 180,
     boxHeight = 40,
 	padding = 5,
 	vSpace = 3*(boxHeight + padding),
@@ -52,7 +52,7 @@ var width,
 	search_term = ""
 	
 
-	var snodes = [], roots = [], max_bosses = 0;
+	var snodes = [], roots = [], max_bosses = 0, max_leaves = 0;
 	var json =  <%= raw(@graph_json_clients) %>
 	snodes = Array.prototype.slice.call(json.nodes);
 	slinks = Array.prototype.slice.call(json.links);
@@ -80,11 +80,12 @@ var width,
 		if (child.reports == 0) {
 			parent.leaves.push(child);
 			max_bosses = child.bosses > max_bosses ? child.bosses : max_bosses;
+			max_leaves = parent.leaves.length > max_leaves ? parent.leaves.length : max_leaves;
 		} else {
 			parent.managers.push(child);
 		}
 	}
-	height = 1000 + (max_bosses * vSpace);
+	height = 1000 + (max_bosses * vSpace) + (max_leaves * boxHeight);
 
 	function computeNodeWidth(node) {
 		//	root nodes are 1 wide, others are 0 because they are under another node
