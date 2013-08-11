@@ -1,8 +1,11 @@
 For Git:
+add changed files via git add
+commit files with message
+
 git push origin
 
 For Heroku:
-rake assets:precompile
+rake assets:precompile (take a while)
 git push heroku master
 heroku restart
 
@@ -15,3 +18,15 @@ make sure public/assets are in git
 
 git add public/assets
 git commit -m "vendor compiled assets"
+
+
+______
+
+Running locally
+
+from loops folder: 
+rails server
+
+Test app:
+http://localhost:3000/loops
+
